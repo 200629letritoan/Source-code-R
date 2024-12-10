@@ -1,0 +1,198 @@
+dirty_data <- "C:/Users/NGUYEN LE THANH TOAN/Desktop/dirty_data.csv" # THEM DU LIEU VAO RSTUDIO
+dirty_data <- read.csv(dirty_data)
+str(dirty_data)
+
+Data1 <-dirty_data[,c("order_total","order_price","delivery_charges","season","nearest_warehouse","date", "is_expedited_delivery","distance_to_nearest_warehouse","is_happy_customer","coupon_discount","customer_long","customer_lat")]
+df_data1 <- Data1[115:125, ]
+print(df_data1)
+colSums(is.na(Data1))
+#SUA LOI SEASON VA DINH DANG NGAY
+(*@\textcolor{orange}{library}@*)(lubridate)
+(*@\textcolor{orange}{library}@*)(dplyr)
+Data1$date <- parse_date_time(Data1$date, orders = c("mdy", "ymd", "dmy")) 
+fix_Data1 <- Data1 %>%
+  mutate(date = as.Date(date, format = "%d%m%Y", tryFormats = c("%d-%m-%Y", "%d%m%Y"))) %>%
+  mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+  mutate(season = case_when(
+    month(date) %in% c(1, 2, 3) ~ "Spring",
+    month(date) %in% c(4, 5, 6) ~ "Summer",
+    month(date) %in% c(7, 8, 9) ~ "Autumn",
+    TRUE ~ "Winter"
+  ))
+fix_data <- fix_Data1[115: 125, ]
+fix_dateandseason <- fix_data[, c( "season","date")]
+print(fix_dateandseason)
+unique(Data1$nearest_warehouse)
+unique(Data1$is_happy_customer)
+unique(Data1$is_expedited_delivery)
+fix_Data1$nearest_warehouse[fix_Data1$nearest_warehouse == 'nickolson'] <- 'Nickolson'
+fix_Data1$nearest_warehouse[fix_Data1$nearest_warehouse == 'thompson'] <- 'Thompson'
+
+unique(fix_Data1$season)
+unique(fix_Data1$nearest_warehouse)
+Des_fun <- function(x) {c(mean(x),median(x),sd(x),min(x),max(x))}
+Des_sta <- apply(fix_Data1[,c("order_total","order_price","delivery_charges","distance_to_nearest_warehouse")],2,Des_fun)
+rownames(Des_sta)=c("mean","median","sd","min","max")
+
+Des_sta
+
+table(fix_Data1$season)
+table(fix_Data1$nearest_warehouse)
+table(fix_Data1$is_expedited_delivery)
+table(fix_Data1$is_happy_customer)
+
+#xem xet ngoai lai cua cac bien dinh luong
+par ( mfrow =c(1 ,1) )
+boxplot(fix_Data1$order_total,main="order_total")
+#bien order_total can phai chinh ngoai lai
+#chinh ngoai lai cua order_total
+Q1 <- quantile(fix_Data1$order_total, 0.25)
+Q3 <- quantile(fix_Data1$order_total, 0.75)
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+fix_Data1$order_total[fix_Data1$order_total < lower_bound ] <- NA
+fix_Data1$order_total[fix_Data1$order_total > upper_bound ] <- NA
+
+colSums(is.na(fix_Data1))
+fix_Data1 <- na.omit(fix_Data1)
+boxplot(fix_Data1$order_total,main="order_total")
+
+#ta xem xet cac bien con lai
+par ( mfrow =c(1 ,3) )
+boxplot(fix_Data1$order_price, main = "order_total", col = "orange")
+boxplot(fix_Data1$delivery_charges, main = "delivery_charges", col = "orange")
+boxplot(fix_Data1$distance_to_nearest_warehouse, main = "distance_to_nearest_warehouse", col = "orange")
+boxplot(fix_Data1$coupon_discount, main = "coupon_discount", col = "orange")
+boxplot(fix_Data1$customer_long, main = "customer_long", col = "orange")
+boxplot(fix_Data1$customer_lat, main = "customer_lat", col = "orange")
+
+#nhung bien khong can phai chinh ngoai lai la:delivery_charges,coupon_discount,customer_long
+#bat dau xoa ngoai lai cac bien con lai
+#xoa ngoai lai order_price
+Q1 <- quantile(fix_Data1$order_price, 0.25)
+Q3 <- quantile(fix_Data1$order_price, 0.75)
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+fix_Data1$order_price[fix_Data1$order_price < lower_bound ] <- NA
+fix_Data1$order_price[fix_Data1$order_price > upper_bound ] <- NA
+#xoa ngoai lai distance_to_nearest_warehouse
+Q1 <- quantile(fix_Data1$distance_to_nearest_warehouse, 0.25)
+Q3 <- quantile(fix_Data1$distance_to_nearest_warehouse, 0.75)
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+fix_Data1$distance_to_nearest_warehouse[fix_Data1$distance_to_nearest_warehouse < lower_bound ] <- NA
+fix_Data1$distance_to_nearest_warehouse[fix_Data1$distance_to_nearest_warehouse > upper_bound ] <- NA
+#xoa ngoai lai customer_lat
+Q1 <- quantile(fix_Data1$customer_lat, 0.25)
+Q3 <- quantile(fix_Data1$customer_lat, 0.75)
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+fix_Data1$customer_lat[fix_Data1$customer_lat < lower_bound ] <- NA
+fix_Data1$customer_lat[fix_Data1$customer_lat > upper_bound ] <- NA
+
+colSums(is.na(fix_Data1))
+fix_Data1 <- na.omit(fix_Data1)
+
+#xem lai cac bien sau khi xoa ngoai lai
+par ( mfrow =c(1 ,3) )
+boxplot(fix_Data1$order_price, main = "order_total", col = "orange")
+boxplot(fix_Data1$distance_to_nearest_warehouse, main = "distance_to_nearest_warehouse", col = "orange")
+boxplot(fix_Data1$customer_lat, main = "customer_lat", col = "orange")
+
+#ve do thi histogram
+par ( mfrow =c(2 ,2) )
+hist(fix_Data1$order_total,xlab="order_total", main="order_total", col="lightblue")
+hist(fix_Data1$delivery_charges,xlab="delivery_charges", main="delivery_charges", col="lightblue")
+hist(fix_Data1$distance_to_nearest_warehouse,xlab="distance_to_nearest_warehouse", main="distance_to_nearest_warehouse", col="lightblue")
+hist(fix_Data1$order_price,xlab="order_price", main="order_price", col="lightblue")
+hist(fix_Data1$order_total,xlab="coupon_discount", main="coupon_discount", col="lightblue")
+hist(fix_Data1$delivery_charges,xlab="customer_long", main="customer_long", col="lightblue")
+hist(fix_Data1$distance_to_nearest_warehouse,xlab="customer_lat", main="customer_lat", col="lightblue")
+
+#ve do thi boxplot the hien su phan phoi cua order_total theo cac bien  phan loai
+par ( mfrow =c(2 ,2) )
+boxplot(order_total~season,fix_Data1,col=c(2,3,4,5))
+boxplot(order_total~nearest_warehouse,fix_Data1,col=c(2,3,4))
+boxplot(order_total~is_happy_customer,fix_Data1,col=c(2,3))
+boxplot(order_total~is_expedited_delivery,fix_Data1,col=c(2,3))
+#ve do thi tuong quan cua order-total voi cac bien khac
+par ( mfrow =c(1 ,1))
+plot ( order_total ~ order_price , main =" order_price ",
+       col=" darkred ",data = fix_Data1)
+plot ( order_total ~ delivery_charges , main =" delivery_charges ",
+       col=" darkred ",data = fix_Data1)
+plot ( order_total ~ coupon_discount , main =" coupon_discount ",
+       col=" darkred ",data = fix_Data1)
+plot ( order_total ~ distance_to_nearest_warehouse , main =" distance_to_nearest_warehouse ",
+       col=" darkred ",data = fix_Data1)
+plot ( order_total ~ customer_long , main =" customer_long ",
+       col=" darkred ",data = fix_Data1)
+plot ( order_total ~ customer_lat , main =" customer_lat ",
+       col=" darkred ",data = fix_Data1)
+cor_maxtrix <- cor(fix_Data1[,c("order_total","order_price","delivery_charges","coupon_discount","distance_to_nearest_warehouse","customer_long","customer_lat")])
+library (corrplot)
+corrplot(cor_maxtrix,method ="circle")
+
+#thong ke suy dien: danh gia order_total phụ thuộc order_total,order_price,delivery_charges,coupon_discount,distance_to_nearest_warehouse, customer_long, customer_lat, season, is_expedited_delivery, is_happy_customer
+
+#kiem tra du lieu co tuan theo phan phoi chuan khong
+
+print(shapiro.test(fix_Data1$order_total))
+print(shapiro.test(fix_Data1$order_price))
+print(shapiro.test(fix_Data1$delivery_charges))
+print(shapiro.test(fix_Data1$coupon_discount))
+print(shapiro.test(fix_Data1$distance_to_nearest_warehouse))
+print(shapiro.test(fix_Data1$customer_long))
+print(shapiro.test(fix_Data1$customer_lat))
+
+#tim mo hinh hoi quy giua order_total va cac bien
+
+model_1 <-lm(order_total~order_price +delivery_charges +distance_to_nearest_warehouse+ coupon_discount+
+               season+ nearest_warehouse+ is_expedited_delivery+ is_happy_customer, data =fix_Data1 )
+summary(model_1)
+
+#module_2 bo di cac biến ta nghi ngo khong phu thuoc
+model_2 <-lm(order_total~order_price+coupon_discount, data =fix_Data1 )
+summary(model_2)
+anova(model_1,model_2)
+#ve 4 do thi
+par (mfrow =c(1,1))
+#hoac par (mfrow =c(2,2)) neu muon xuat hien 4 hinh cung luc
+plot ( model_2)
+
+#Ve do thi mo hinh order_price va order-total
+data <- fix_Data1
+model <- lm(order_total ~ order_price, data)
+predicted_data <- data.frame(order_price = seq(min(data$order_price), max(data$order_price), length.out = 100))
+predicted_data$order_total <- predict(model, newdata = predicted_data)
+
+# ve do thi order_total va order_price
+library(ggplot2)
+ggplot(data, aes(x = order_price, y = order_total)) +
+  geom_point() +
+  geom_line(data = predicted_data, aes(x = order_price, y = order_total), color = "red") +
+  labs(title = "Mô hình Hồi quy tuyến tính",
+       x = "order_price",
+       y = "order_total") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#Ve do thi mo hinh order_price va order-total
+data3 <- fix_Data1
+model <- lm(order_total ~ coupon_discount, data3)
+predicted_data2 <- data.frame(coupon_discount = seq(min(data3$coupon_discount), max(data3$coupon_discount), length.out = 100))
+predicted_data2$order_total <- predict(model, newdata = predicted_data2)
+# Ve do thi order_total va coupon_discount
+library(ggplot2)
+ggplot(data3, aes(x = coupon_discount, y = order_total)) +
+  geom_point() +
+  geom_line(data = predicted_data2, aes(x = coupon_discount, y = order_total), color = "red") +
+  labs(title = "Mô hình Hồi quy tuyến tính",
+       x = "coupon_discount",
+       y = "order_total") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
